@@ -1,3 +1,2 @@
-# CSGO Web
-## Public Information System for CSGO Thesis
-Made with Nuxt
+# CSGO Web Client
+Public Information System client for CSGO Thesis made with Nuxt

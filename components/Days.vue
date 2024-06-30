@@ -106,6 +106,8 @@
 </template>
 
 <script setup>
+import moment from 'moment-timezone'
+
 const card = defineModel('card')
 const selectedWindow = defineModel('selectedWindow')
 
@@ -166,8 +168,7 @@ watch(selectedWindow, (newVal, oldVal) => {
     console.log(newVal)
 })
 
-const day = new Date()
-const currWeekday = days[day.getDay()].day
+const currWeekday = moment().tz("Asia/Manila").format('dddd')
 const loading = false
 </script>
 

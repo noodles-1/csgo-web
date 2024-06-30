@@ -1,5 +1,9 @@
 <template>
     <div class="days-container">
+        <div class="text-2xl md:text-center md:text-4xl mx-[4vh] lg:mx-[8vh] my-[4vh]">
+            <span> Today is </span>
+            <span class="font-medium"> {{ currWeekday }}. </span>
+        </div>
         <v-slide-group
             show-arrows
             center-active

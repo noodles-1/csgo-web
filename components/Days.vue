@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="days-container">
         <v-slide-group
             show-arrows
             center-active
@@ -14,54 +14,91 @@
                     :variant="(isSelected || currWeekday === day.day) ? 'outlined' : 'plain'"
                     :color="currWeekday === day.day ? '#48BFE3' : isSelected ? '#4889e3' : 'white'"
                     @click="toggle(); selectedWindow = null"
-                    height="300px"
+                    height="220px"
                     width="210px"
+                    rounded="lg"
+                    class="mx-[4px]"
                 >
                     <template v-slot:title>
-                        <span class="text-white font-medium text-2xl lg:text-3xl"> {{ day.day }} </span>
+                        <span class="text-white font-medium text-3xl lg:text-3xl"> {{ day.day }} </span>
                         <v-skeleton-loader v-if="loading" type="list-item-three-line"></v-skeleton-loader>
                     </template>
                     <template v-slot:subtitle>
                         <span 
                             v-if="!loading"
                             :class="currWeekday === day.day ? 'text-[#48BFE3] font-medium' : isSelected ? 'text-[#4889e3] font-medium' : 'text-white'"
-                            class="text-normal text-[16px]"
+                            class="text-normal text-[20px]"
                         >
                             CP Window
                         </span>
                         <div v-if="!loading">
-                            <p class="text-white" v-for="range in day.timeRanges" :key="range.id"> {{ range.window }} </p>
+                            <p class="text-white text-[16px] md:text-[14px]" v-for="range in day.timeRanges" :key="range.id"> {{ range.window }} </p>
                         </div>
                     </template>
                     <v-card-text>
-                        <p v-if="!loading"> click for more info </p>
+                        <p v-if="!loading" class="text-[16px] md:text-[14px]"> click for more info </p>
                     </v-card-text>
                 </v-card>
             </v-slide-group-item>
         </v-slide-group>
 
-        <v-expand-transition>
+        <v-expand-transition class="my-[4vh]">
             <v-sheet
                 v-if="card != null"
-                height="200"
-                rounded="lg"
                 :elevation="10"
-                class="mx-auto w-[90%]"
+                class="mx-auto lg:w-[90%] md:h-[160px] lg:h-[210px] rounded-lg"
             >
-                <div class="flex align-center justify-center">
-                    <h3 class="text-h6">
-                        {{ days[card].day }}
+                <div class="p-[4vh] md:p-[0vh] flex flex-col md:flex-row md:items-center justify-between md:justify-around h-full">
+                    <div class="md:px-[2vh] lg:px-[10vh]">
+                        <span class="text-2xl font-semibold">
+                            {{ days[card].day }}
+                        </span>
                         <v-select
+                            v-if="!loading"
                             v-model="selectedWindow"
                             :items="days[card].timeRanges"
                             item-title="window"
+                            item-value="id"
                             variant="outlined"
                             label="Choose time window"
-                            width="50vh"
-                            @change="console.log('changed')"
+                            class="mt-[16px] w-full md:w-[30vh]"
+                            color="#48BFE3"
                         >
                         </v-select>
-                    </h3>
+                        <v-skeleton-loader v-if="loading" type="ossein" class="h-[40px]"></v-skeleton-loader>
+                    </div>
+                    <div class="w-full mb-[2vh] md:mb-[0vh] md:px-[0vh] lg:px-[5vh] md:flex md:justify-center md:items-center lg:border-r-[1px] border-gray-600">
+                        <div v-if="!loading">
+                            <p class="font-medium text-[#48BFE3]"> Detection </p>
+                            <p> Cars are detected </p>
+                            <p> Motorcycles are detected </p>
+                            <p> Buses are detected </p>
+                            <p> Trucks are detected </p>
+                        </div>
+                        <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
+                    </div>
+                    <div class="w-full md:px-[2vh] lg:px-[10vh] md:flex md:justify-center md:items-center">
+                        <div v-if="!loading" class="w-full">
+                            <p class="font-medium text-[#48BFE3]"> Charge </p>
+                            <div class="flex justify-between">
+                                <p> Car </p>
+                                <p> PHP 250.00 </p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p> Motorcycle </p>
+                                <p> PHP 250.00 </p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p> Bus </p>
+                                <p> PHP 250.00 </p>
+                            </div>
+                            <div class="flex justify-between">
+                                <p> Truck </p>
+                                <p> PHP 250.00 </p>
+                            </div>
+                        </div>
+                        <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
+                    </div>
                 </div>
             </v-sheet>
         </v-expand-transition>
@@ -115,13 +152,6 @@ const days = [
         ]
     },
     {
-        day: 'Monday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 13},
-            {window: '4:00pm to 8:00pm', id: 14}
-        ]
-    },
-    {
         day: 'Saturday',
         timeRanges: [
             {window: '7:00am to 10:00am', id: 15},
@@ -130,9 +160,11 @@ const days = [
     },
 ]
 
-const selectWindow = (e) => {
-    console.log(e)
-}
+watch(selectedWindow, (newVal, oldVal) => {
+    if (!newVal)
+        return
+    console.log(newVal)
+})
 
 const day = new Date()
 const currWeekday = days[day.getDay()].day
@@ -140,7 +172,7 @@ const loading = false
 </script>
 
 <style scoped>
-div {
+.days-container {
     @apply
         mt-[4vh]
         max-w-[44vh]

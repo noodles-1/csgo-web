@@ -15,5 +15,6 @@
         flex
         flex-col
         items-center
+        mb-[10vh]
 }
 </style>

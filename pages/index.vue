@@ -34,7 +34,6 @@ header {
         md:flex
         md:flex-col
         my-[6vh]
-        ml-[4vh]
         md:mt-[6vh]
         md:items-center
 }

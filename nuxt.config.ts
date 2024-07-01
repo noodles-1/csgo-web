@@ -24,5 +24,10 @@ export default defineNuxtConfig({
     },
     extends: [
         'nuxt-emoji'
-    ]
+    ],
+    runtimeConfig: {
+        public: {
+            SERVER_URL: process.env.SERVER_URL,
+        }
+    }
 })

@@ -10,13 +10,13 @@
             v-model="card"
         >
             <v-slide-group-item
-                v-for="(day, i) in days"
-                :key="i"
+                v-for="day in days"
+                :key="day"
                 v-slot="{ isSelected, toggle }"
             >
                 <v-card
-                    :variant="(isSelected || currWeekday === day.day) ? 'outlined' : 'plain'"
-                    :color="currWeekday === day.day ? '#48BFE3' : isSelected ? '#4889e3' : 'white'"
+                    :variant="(isSelected || currWeekday === day) ? 'outlined' : 'plain'"
+                    :color="currWeekday === day ? '#48BFE3' : isSelected ? '#4889e3' : 'white'"
                     @click="toggle(); selectedWindow = null"
                     height="220px"
                     width="210px"
@@ -24,19 +24,25 @@
                     class="mx-[4px]"
                 >
                     <template v-slot:title>
-                        <span class="text-white font-medium text-3xl lg:text-3xl"> {{ day.day }} </span>
+                        <span class="text-white font-medium text-3xl lg:text-3xl"> {{ day }} </span>
                         <v-skeleton-loader v-if="loading" type="list-item-three-line"></v-skeleton-loader>
                     </template>
                     <template v-slot:subtitle>
                         <span 
                             v-if="!loading"
-                            :class="currWeekday === day.day ? 'text-[#48BFE3] font-medium' : isSelected ? 'text-[#4889e3] font-medium' : 'text-white'"
+                            :class="currWeekday === day ? 'text-[#48BFE3] font-medium' : isSelected ? 'text-[#4889e3] font-medium' : 'text-white'"
                             class="text-normal text-[20px]"
                         >
                             CP Window
                         </span>
-                        <div v-if="!loading">
-                            <p class="text-white text-[16px] md:text-[14px]" v-for="range in day.timeRanges" :key="range.id"> {{ range.window }} </p>
+                        <div v-if="!loading && daysResponse[day].length == 0">
+                            <p class="text-white text-[16px] md:text-[14px]"> (none) </p>
+                        </div>
+                        <div v-if="!loading && daysResponse[day].length > 0">
+                            <p class="text-white text-[16px] md:text-[14px]" v-for="dayResponse in daysResponse[day].slice(0, 3)" :key="dayResponse.id"> {{ dayResponse.window }} </p>
+                            <div v-if="daysResponse[day].length > 3">
+                                <p class="text-white text-[16px] md:text-[14px]"> (more) </p>
+                            </div>
                         </div>
                     </template>
                     <v-card-text>
@@ -55,12 +61,12 @@
                 <div class="p-[4vh] md:p-[0vh] flex flex-col md:flex-row md:items-center justify-between md:justify-around h-full">
                     <div class="md:px-[2vh] lg:px-[10vh]">
                         <span class="text-2xl font-semibold">
-                            {{ days[card].day }}
+                            {{ days[card] }}
                         </span>
                         <v-select
                             v-if="!loading"
                             v-model="selectedWindow"
-                            :items="days[card].timeRanges"
+                            :items="daysResponse[days[card]]"
                             item-title="window"
                             item-value="id"
                             variant="outlined"
@@ -72,33 +78,33 @@
                         <v-skeleton-loader v-if="loading" type="ossein" class="h-[40px]"></v-skeleton-loader>
                     </div>
                     <div class="w-full mb-[2vh] md:mb-[0vh] md:px-[0vh] lg:px-[5vh] md:flex md:justify-center md:items-center lg:border-r-[1px] border-gray-600">
-                        <div v-if="!loading">
+                        <div v-if="!loading && selectedWindow && setting">
                             <p class="font-medium text-[#48BFE3]"> Detection </p>
-                            <p> Cars are detected </p>
-                            <p> Motorcycles are detected </p>
-                            <p> Buses are detected </p>
-                            <p> Trucks are detected </p>
+                            <p> Cars are <span v-if="!setting.detectCar"> not </span> detected </p>
+                            <p> Motorcycles are <span v-if="!setting.detectMotorcycle"> not </span> detected </p>
+                            <p> Buses are <span v-if="!setting.detectBus"> not </span> detected </p>
+                            <p> Trucks are <span v-if="!setting.detectTruck"> not </span> detected </p>
                         </div>
                         <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
                     </div>
                     <div class="w-full md:px-[2vh] lg:px-[10vh] md:flex md:justify-center md:items-center">
-                        <div v-if="!loading" class="w-full">
+                        <div v-if="!loading && selectedWindow && setting" class="w-full">
                             <p class="font-medium text-[#48BFE3]"> Charge </p>
                             <div class="flex justify-between">
                                 <p> Car </p>
-                                <p> PHP 250.00 </p>
+                                <p> PHP {{ setting.carPrice }} </p>
                             </div>
                             <div class="flex justify-between">
                                 <p> Motorcycle </p>
-                                <p> PHP 250.00 </p>
+                                <p> PHP {{ setting.motorcyclePrice }} </p>
                             </div>
                             <div class="flex justify-between">
                                 <p> Bus </p>
-                                <p> PHP 250.00 </p>
+                                <p> PHP {{ setting.busPrice }} </p>
                             </div>
                             <div class="flex justify-between">
                                 <p> Truck </p>
-                                <p> PHP 250.00 </p>
+                                <p> PHP {{ setting.truckPrice }} </p>
                             </div>
                         </div>
                         <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
@@ -115,65 +121,67 @@ import moment from 'moment-timezone'
 const card = defineModel('card')
 const selectedWindow = defineModel('selectedWindow')
 
-const days = [
-    {
-        day: 'Sunday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 1},
-            {window: '4:00pm to 8:00pm', id: 2}
-        ]
-    },
-    {
-        day: 'Monday',
-        timeRanges: [
-            {window: '8:00am to 11:00am', id: 3},
-        ]
-    },
-    {
-        day: 'Tuesday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 5},
-            {window: '4:00pm to 8:00pm', id: 6}
-        ]
-    },
-    {
-        day: 'Wednesday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 7},
-            {window: '4:00pm to 8:00pm', id: 8}
-        ]
-    },
-    {
-        day: 'Thursday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 9},
-            {window: '4:00pm to 8:00pm', id: 10}
-        ]
-    },
-    {
-        day: 'Friday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 11},
-            {window: '4:00pm to 8:00pm', id: 12}
-        ]
-    },
-    {
-        day: 'Saturday',
-        timeRanges: [
-            {window: '7:00am to 10:00am', id: 15},
-            {window: '4:00pm to 8:00pm', id: 16}
-        ]
-    },
-]
+const currWeekday = moment().tz("Asia/Manila").format('dddd')
 
-watch(selectedWindow, (newVal, oldVal) => {
+const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const daysResponse = ref(null)
+const loading = ref(true)
+const setting = ref(null)
+const config = useRuntimeConfig()
+
+watch(selectedWindow, async (newVal, _) => {
     if (!newVal)
         return
-    console.log(newVal)
+
+    setting.value = null
+    const response = await fetch(`${config.public.SERVER_URL}/settings/${newVal}`)
+    const data = await response.json()
+    setting.value = data
 })
 
-const currWeekday = moment().tz("Asia/Manila").format('dddd')
-const loading = false
+const toDate = (timeStr) => {
+    const now = new Date()
+    const nowDateTime = now.toISOString()
+    const nowDate = nowDateTime.split('T')[0]
+    return new Date(nowDate + 'T' + timeStr)
+}
+
+const to12HourFormat = (timeStr) => {
+    const date = toDate(timeStr)
+    return date.toLocaleString('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+    })
+}
+
+const fetchData = async () => {
+    daysResponse.value = []
+    loading.value = true
+
+    try {
+        const fetchPromises = days.map(async function(day) {
+            const response = await fetch(`${config.public.SERVER_URL}/settings/day/${day}`)
+            const data = await response.json()
+            data.sort((a, b) => {
+                return toDate(a.hourFrom) - toDate(b.hourFrom)
+            })
+            daysResponse.value[day] = data
+            daysResponse.value[day].forEach(dayResponse => {
+                dayResponse.window = to12HourFormat(dayResponse.hourFrom) + ' to ' + to12HourFormat(dayResponse.hourTo)
+            })
+        })
+
+        await Promise.all(fetchPromises)
+        loading.value = false
+    }
+    catch (err) {
+        loading.value = true
+        // show error message
+    }
+}
+
+await fetchData()
 </script>
 
 <style scoped>

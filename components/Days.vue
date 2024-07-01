@@ -78,17 +78,17 @@
                         <v-skeleton-loader v-if="loading" type="ossein" class="h-[40px]"></v-skeleton-loader>
                     </div>
                     <div class="w-full mb-[2vh] md:mb-[0vh] md:px-[0vh] lg:px-[5vh] md:flex md:justify-center md:items-center lg:border-r-[1px] border-gray-600">
-                        <div v-if="!loading && selectedWindow && setting">
+                        <div v-if="!windowLoading && selectedWindow && setting">
                             <p class="font-medium text-[#48BFE3]"> Detection </p>
                             <p> Cars are <span v-if="!setting.detectCar"> not </span> detected </p>
                             <p> Motorcycles are <span v-if="!setting.detectMotorcycle"> not </span> detected </p>
                             <p> Buses are <span v-if="!setting.detectBus"> not </span> detected </p>
                             <p> Trucks are <span v-if="!setting.detectTruck"> not </span> detected </p>
                         </div>
-                        <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
+                        <v-skeleton-loader v-if="windowLoading && selectedWindow" type="paragraph"></v-skeleton-loader>
                     </div>
                     <div class="w-full md:px-[2vh] lg:px-[10vh] md:flex md:justify-center md:items-center">
-                        <div v-if="!loading && selectedWindow && setting" class="w-full">
+                        <div v-if="!windowLoading && selectedWindow && setting" class="w-full">
                             <p class="font-medium text-[#48BFE3]"> Charge </p>
                             <div class="flex justify-between">
                                 <p> Car </p>
@@ -107,7 +107,7 @@
                                 <p> PHP {{ setting.truckPrice }} </p>
                             </div>
                         </div>
-                        <v-skeleton-loader v-if="loading" type="paragraph"></v-skeleton-loader>
+                        <v-skeleton-loader v-if="windowLoading && selectedWindow" type="paragraph"></v-skeleton-loader>
                     </div>
                 </div>
             </v-sheet>
@@ -126,6 +126,7 @@ const currWeekday = moment().tz("Asia/Manila").format('dddd')
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const daysResponse = ref(null)
 const loading = ref(true)
+const windowLoading = ref(true)
 const setting = ref(null)
 const config = useRuntimeConfig()
 
@@ -133,10 +134,16 @@ watch(selectedWindow, async (newVal, _) => {
     if (!newVal)
         return
 
-    setting.value = null
-    const response = await fetch(`${config.public.SERVER_URL}/settings/${newVal}`)
-    const data = await response.json()
-    setting.value = data
+    windowLoading.value = true
+    try {
+        const response = await fetch(`${config.public.SERVER_URL}/settings/${newVal}`)
+        const data = await response.json()
+        setting.value = data
+        windowLoading.value = false
+    }
+    catch (err) {
+        windowLoading.value = true
+    }
 })
 
 const toDate = (timeStr) => {

@@ -39,7 +39,10 @@
                             <p class="text-white text-[16px] md:text-[14px]"> (none) </p>
                         </div>
                         <div v-if="!loading && daysResponse[day].length > 0">
-                            <p class="text-white text-[16px] md:text-[14px]" v-for="dayResponse in daysResponse[day].slice(0, 3)" :key="dayResponse.id"> {{ dayResponse.window }} </p>
+                            <div class="text-[16px] md:text-[14px]" v-for="dayResponse in daysResponse[day].slice(0, 3)" :key="dayResponse.id"> 
+                                <span v-if="toDate(dayResponse.hourFrom) <= currTime && currTime <= toDate(dayResponse.hourTo) && currWeekday === day" class="font-semibold text-[#48BFE3]"> {{ dayResponse.window }} </span>
+                                <span v-else class="font-normal text-white"> {{ dayResponse.window }} </span>
+                            </div>
                             <div v-if="daysResponse[day].length > 3">
                                 <p class="text-white text-[16px] md:text-[14px]"> (more) </p>
                             </div>
@@ -122,6 +125,7 @@ const card = defineModel('card')
 const selectedWindow = defineModel('selectedWindow')
 
 const currWeekday = moment().tz("Asia/Manila").format('dddd')
+const currTime = new Date()
 
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 const daysResponse = ref(null)
@@ -165,6 +169,8 @@ const to12HourFormat = (timeStr) => {
 const fetchData = async () => {
     daysResponse.value = []
     loading.value = true
+    setting.value = null
+    selectedWindow.value = null
 
     try {
         const fetchPromises = days.map(async function(day) {
@@ -188,7 +194,13 @@ const fetchData = async () => {
     }
 }
 
-await fetchData()
+const pollData = async () => {
+    fetchData()
+    setTimeout(pollData, 60000)
+}
+
+fetchData()
+pollData()
 </script>
 
 <style scoped>

@@ -206,6 +206,8 @@ pollData()
 <style scoped>
 .days-container {
     @apply
+        mx-[10px]
+        md:mx-0
         mt-[4vh]
         max-w-[44vh]
         md:max-w-[90vh]

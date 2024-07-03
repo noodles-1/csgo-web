@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             SERVER_URL: process.env.SERVER_URL,
-        }
-    }
+            GCP_API_KEY: process.env.GCP_API_KEY,
+        },
+    },
 })

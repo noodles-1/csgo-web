@@ -142,10 +142,6 @@ const onClickOriginPin = async () => {
             async (position) => {
                 const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.coords.latitude},${position.coords.longitude}&key=${config.public.GCP_API_KEY}`)
                 const data = await response.json()
-
-                console.log(response.ok)
-                console.log(data)
-                console.log(data.results)
                 
                 if (response.ok)
                     origin.value = data.results[0].formatted_address

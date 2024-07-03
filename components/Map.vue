@@ -140,6 +140,8 @@ const onClickOriginPin = async () => {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
+                console.log(position.coords.latitude)
+                console.log(position.coords.longitude)
                 const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${position.coords.latitude},${position.coords.longitude}&key=${config.public.GCP_API_KEY}`)
                 const data = await response.json()
                 

@@ -51,9 +51,16 @@
                 Search
             </v-btn>
         </div>
-        <div v-if="distance && duration" class="bg-gray-800 h-[70px] md:h-[60px] grid grid-cols-2 items-center rounded-t-lg mt-[20px]"> 
-            <p class="font-medium text-[16px] text-center border-r-[1px] border-gray-600"> Distance: {{ distance }} </p>
-            <p class="font-medium text-[16px] text-center"> Duration: {{ duration }} </p> 
+        <div v-if="distance && actualDuration && trafficLevel " class="bg-gray-800 h-[100px] md:h-[60px] flex justify-around md:grid md:grid-cols-3 items-center rounded-t-lg mt-[20px]"> 
+            <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
+                <span class="font-medium"> Distance: </span> <span> {{ distance }} </span>
+            </div>
+            <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
+                <span class="font-medium"> Duration </span> <span class="font-medium"> (actual): </span> <span> {{ actualDuration }} </span>
+            </div>
+            <div class="text-[16px] text-center flex flex-col md:block">
+                <span class="font-medium"> Traffic level: </span> <span> {{ trafficLevel }} </span> 
+            </div>
         </div>
         <div 
             id="googleMap"
@@ -75,7 +82,8 @@ const loading = ref(false)
 const originLocations = ref([])
 const destLocations = ref([])
 const distance = ref(null)
-const duration = ref(null)
+const actualDuration = ref(null)
+const trafficLevel = ref(null)
 
 const loader = new Loader({
     apiKey: config.public.GCP_API_KEY,
@@ -104,7 +112,7 @@ async function loadMap() {
     const { Map } = await loader.importLibrary('maps')
     map = new Map(document.getElementById('googleMap'), mapOptions)
 
-    const { DirectionsService, DirectionsRenderer, TrafficModel, TravelMode } = await loader.importLibrary('routes')
+    const { DirectionsService, DirectionsRenderer } = await loader.importLibrary('routes')
     directionsService = new DirectionsService()
     directionsRenderer = new DirectionsRenderer()
     directionsRenderer.setMap(map)
@@ -120,14 +128,32 @@ const handleSubmit = async () => {
         origin: originValue,
         destination: destValue,
         travelMode: 'DRIVING',
-        unitSystem: 0
+        unitSystem: 0,
+        provideRouteAlternatives: true,
+        drivingOptions: {
+            departureTime: new Date(),
+            trafficModel: 'pessimistic'
+        }
     }
 
     directionsService.route(request, (res, status) => {
         if (status == 'OK') {
             directionsRenderer.setDirections(res)
+            const durationValue = res.routes[0].legs[0].duration.value
+            const actualDurationValue = res.routes[0].legs[0].duration_in_traffic.value
+            console.log(res.routes[0].legs[0].duration.text)
+            console.log(res.routes[0].legs[0].duration_in_traffic.text)
+
             distance.value = res.routes[0].legs[0].distance.text
-            duration.value = res.routes[0].legs[0].duration.text
+            actualDuration.value = res.routes[0].legs[0].duration_in_traffic.text
+            const traffic = Number(durationValue / actualDurationValue).toFixed(2)
+            
+            if (traffic < 0.7)
+                trafficLevel.value = 'heavy traffic'
+            else if (traffic < 0.9)
+                trafficLevel.value = 'moderate traffic'
+            else
+                trafficLevel.value = 'light traffic'
         }
         else
             directionsRenderer.setDirections({ routes: [] })
@@ -151,7 +177,7 @@ const onChangeOrigin = async () => {
                             latitude: 14.570172739611696,
                             longitude: 121.0459622208026
                         },
-                        radius: 26000
+                        radius: 32000
                     }
                 }
             })

@@ -87,7 +87,7 @@ const mapOptions = {
         lat: 14.570172739611696,
         lng: 121.0459622208026
     },
-    zoom: 14,
+    zoom: 10,
     backgroundColor: '#121212',
     mapTypeControl: false,
     fullscreenControl: false,

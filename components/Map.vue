@@ -51,9 +51,14 @@
                 Search
             </v-btn>
         </div>
+        <div v-if="distance && duration" class="bg-gray-800 h-[70px] md:h-[60px] grid grid-cols-2 items-center rounded-t-lg mt-[20px]"> 
+            <p class="font-medium text-[16px] text-center border-r-[1px] border-gray-600"> Distance: {{ distance }} </p>
+            <p class="font-medium text-[16px] text-center"> Duration: {{ duration }} </p> 
+        </div>
         <div 
             id="googleMap"
-            class="w-full h-[500px] my-[20px] rounded-lg border-[#4889e3]"
+            class="w-full h-[500px] border-[#4889e3]"
+            :class="distance ? 'rounded-b-lg' : 'rounded-lg mt-[20px]'"
         >
         </div>
     </div>
@@ -69,6 +74,8 @@ const dest = ref(null)
 const loading = ref(false)
 const originLocations = ref([])
 const destLocations = ref([])
+const distance = ref(null)
+const duration = ref(null)
 
 const loader = new Loader({
     apiKey: config.public.GCP_API_KEY,
@@ -80,14 +87,18 @@ const mapOptions = {
         lat: 14.570172739611696,
         lng: 121.0459622208026
     },
-    zoom: 14
+    zoom: 14,
+    backgroundColor: '#121212',
+    mapTypeControl: false,
+    fullscreenControl: false,
+    minZoom: 8,
+    maxZoom: 20,
+    streetViewControl: false
 }
 
 var map
 var directionsService
 var directionsRenderer
-var travelMode
-var trafficModel
 
 async function loadMap() {
     const { Map } = await loader.importLibrary('maps')
@@ -97,7 +108,6 @@ async function loadMap() {
     directionsService = new DirectionsService()
     directionsRenderer = new DirectionsRenderer()
     directionsRenderer.setMap(map)
-    travelMode = TravelMode.DRIVING
 }
 
 loadMap()
@@ -109,14 +119,21 @@ const handleSubmit = async () => {
     const request = {
         origin: originValue,
         destination: destValue,
-        travelMode: travelMode
+        travelMode: 'DRIVING',
+        unitSystem: 0
     }
 
     directionsService.route(request, (res, status) => {
-        if (status == 'OK')
+        if (status == 'OK') {
             directionsRenderer.setDirections(res)
+            distance.value = res.routes[0].legs[0].distance.text
+            duration.value = res.routes[0].legs[0].duration.text
+        }
+        else
+            directionsRenderer.setDirections({ routes: [] })
     })
 }
+
 
 const onChangeOrigin = async () => {
     if (origin.value) {

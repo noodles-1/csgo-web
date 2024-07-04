@@ -17,14 +17,13 @@
         <br>
         <v-divider></v-divider>
         <br>
-        <Map />
+        <ClientOnly>
+            <Map />
+        </ClientOnly>
     </div>
 </template>
 
-<script>
-export default {
-
-}
+<script setup>
 </script>
 
 <style scoped>

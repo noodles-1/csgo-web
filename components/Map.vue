@@ -51,10 +51,18 @@
                 Search
             </v-btn>
         </div>
+        <div 
+            id="googleMap"
+            class="w-full h-[500px] my-[20px] rounded-lg border-[#4889e3]"
+        >
+        </div>
     </div>
 </template>
 
 <script setup>
+import { Loader } from '@googlemaps/js-api-loader'
+import { ref } from 'vue'
+
 const config = useRuntimeConfig()
 const origin = ref(null)
 const dest = ref(null)
@@ -62,10 +70,52 @@ const loading = ref(false)
 const originLocations = ref([])
 const destLocations = ref([])
 
-const handleSubmit = () => {
-    console.log(origin.value.value ?? origin.value)
-    loading.value = true
-    setTimeout(() => (loading.value = false), 2000)
+const loader = new Loader({
+    apiKey: config.public.GCP_API_KEY,
+    version: 'weekly',
+})
+
+const mapOptions = {
+    center: {
+        lat: 14.570172739611696,
+        lng: 121.0459622208026
+    },
+    zoom: 14
+}
+
+var map
+var directionsService
+var directionsRenderer
+var travelMode
+var trafficModel
+
+async function loadMap() {
+    const { Map } = await loader.importLibrary('maps')
+    map = new Map(document.getElementById('googleMap'), mapOptions)
+
+    const { DirectionsService, DirectionsRenderer, TrafficModel, TravelMode } = await loader.importLibrary('routes')
+    directionsService = new DirectionsService()
+    directionsRenderer = new DirectionsRenderer()
+    directionsRenderer.setMap(map)
+    travelMode = TravelMode.DRIVING
+}
+
+loadMap()
+
+const handleSubmit = async () => {
+    const originValue = origin.value.value ?? origin.value
+    const destValue = dest.value.value ?? dest.value
+    
+    const request = {
+        origin: originValue,
+        destination: destValue,
+        travelMode: travelMode
+    }
+
+    directionsService.route(request, (res, status) => {
+        if (status == 'OK')
+            directionsRenderer.setDirections(res)
+    })
 }
 
 const onChangeOrigin = async () => {
@@ -93,8 +143,9 @@ const onChangeOrigin = async () => {
 
         if (data.suggestions)
             originLocations.value = data.suggestions.map((suggestion) => ({
-                title: suggestion.placePrediction.text.text,
+                title: suggestion.placePrediction.structuredFormat.mainText.text,
                 subtitle: suggestion.placePrediction.structuredFormat.secondaryText.text,
+                value: suggestion.placePrediction.text.text
             }))
     }
     else {
@@ -127,8 +178,9 @@ const onChangeDest = async () => {
 
         if (data.suggestions)
             destLocations.value = data.suggestions.map((suggestion) => ({
-                title: suggestion.placePrediction.text.text,
+                title: suggestion.placePrediction.structuredFormat.mainText.text,
                 subtitle: suggestion.placePrediction.structuredFormat.secondaryText.text,
+                value: suggestion.placePrediction.text.text
             }))
     }
     else {

@@ -141,8 +141,6 @@ const handleSubmit = async () => {
             directionsRenderer.setDirections(res)
             const durationValue = res.routes[0].legs[0].duration.value
             const actualDurationValue = res.routes[0].legs[0].duration_in_traffic.value
-            console.log(res.routes[0].legs[0].duration.text)
-            console.log(res.routes[0].legs[0].duration_in_traffic.text)
 
             distance.value = res.routes[0].legs[0].distance.text
             actualDuration.value = res.routes[0].legs[0].duration_in_traffic.text
@@ -171,13 +169,13 @@ const onChangeOrigin = async () => {
             },
             body: JSON.stringify({
                 input: origin.value.value ?? origin.value,
-                locationRestriction: {
+                locationBias: {
                     circle: {
                         center: {
                             latitude: 14.570172739611696,
                             longitude: 121.0459622208026
                         },
-                        radius: 32000
+                        radius: 30000
                     }
                 }
             })

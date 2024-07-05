@@ -51,15 +51,20 @@
                 Search
             </v-btn>
         </div>
-        <div v-if="distance && actualDuration && trafficLevel " class="bg-gray-800 h-[100px] md:h-[60px] flex justify-around md:grid md:grid-cols-3 items-center rounded-t-lg mt-[20px]"> 
-            <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
-                <span class="font-medium"> Distance: </span> <span> {{ distance }} </span>
+        <div v-if="directionsStatus" class="flex items-center bg-gray-800 h-[100px] md:h-[60px] rounded-t-lg mt-[20px]">
+            <div v-if="directionsStatus === 'OK'" class="flex items-center justify-around md:grid md:grid-cols-3 w-full"> 
+                <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
+                    <span class="font-medium"> Distance: </span> <span> {{ distance }} </span>
+                </div>
+                <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
+                    <span class="font-medium"> Duration </span> <span class="font-medium"> (actual): </span> <span> {{ actualDuration }} </span>
+                </div>
+                <div class="text-[16px] text-center flex flex-col md:block">
+                    <span class="font-medium"> Traffic level: </span> <span> {{ trafficLevel }} </span> 
+                </div>
             </div>
-            <div class="text-[16px] text-center md:border-r-[1px] border-gray-600 flex flex-col md:block">
-                <span class="font-medium"> Duration </span> <span class="font-medium"> (actual): </span> <span> {{ actualDuration }} </span>
-            </div>
-            <div class="text-[16px] text-center flex flex-col md:block">
-                <span class="font-medium"> Traffic level: </span> <span> {{ trafficLevel }} </span> 
+            <div v-else class="flex justify-center items-center w-full"> 
+                <p> No result for this query. </p>
             </div>
         </div>
         <div 
@@ -81,6 +86,7 @@ const dest = ref(null)
 const loading = ref(false)
 const originLocations = ref([])
 const destLocations = ref([])
+const directionsStatus = ref(null)
 const distance = ref(null)
 const actualDuration = ref(null)
 const trafficLevel = ref(null)
@@ -137,18 +143,20 @@ const handleSubmit = async () => {
     }
 
     directionsService.route(request, (res, status) => {
+        directionsStatus.value = status
         if (status == 'OK') {
             directionsRenderer.setDirections(res)
             const durationValue = res.routes[0].legs[0].duration.value
             const actualDurationValue = res.routes[0].legs[0].duration_in_traffic.value
+            console.log(res.routes[0].legs[0].duration.text)
 
             distance.value = res.routes[0].legs[0].distance.text
             actualDuration.value = res.routes[0].legs[0].duration_in_traffic.text
             const traffic = Number(durationValue / actualDurationValue).toFixed(2)
             
-            if (traffic < 0.7)
+            if (traffic < 0.5)
                 trafficLevel.value = 'heavy traffic'
-            else if (traffic < 0.9)
+            else if (traffic < 0.75)
                 trafficLevel.value = 'moderate traffic'
             else
                 trafficLevel.value = 'light traffic'
@@ -185,7 +193,7 @@ const onChangeOrigin = async () => {
         if (data.suggestions)
             originLocations.value = data.suggestions.map((suggestion) => ({
                 title: suggestion.placePrediction.structuredFormat.mainText.text,
-                subtitle: suggestion.placePrediction.structuredFormat.secondaryText.text,
+                subtitle: suggestion.placePrediction.structuredFormat.secondaryText ? suggestion.placePrediction.structuredFormat.secondaryText.text : '',
                 value: suggestion.placePrediction.text.text
             }))
     }
@@ -220,7 +228,7 @@ const onChangeDest = async () => {
         if (data.suggestions)
             destLocations.value = data.suggestions.map((suggestion) => ({
                 title: suggestion.placePrediction.structuredFormat.mainText.text,
-                subtitle: suggestion.placePrediction.structuredFormat.secondaryText.text,
+                subtitle: suggestion.placePrediction.structuredFormat.secondaryText ? suggestion.placePrediction.structuredFormat.secondaryText.text : '',
                 value: suggestion.placePrediction.text.text
             }))
     }
